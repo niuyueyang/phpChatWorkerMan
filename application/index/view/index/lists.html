@@ -1,0 +1,138 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=no">-->
+    <meta name="format-detection" content="telephone=no" />
+    <title>沟通中</title>
+    <link rel="stylesheet" type="text/css" href="__STATIC__/newcj/css/themes.css?v=2017129">
+    <link rel="stylesheet" type="text/css" href="__STATIC__/newcj/css/h5app.css">
+    <link rel="stylesheet" type="text/css" href="__STATIC__/newcj/fonts/iconfont.css?v=2016070717">
+    <link rel="stylesheet" type="text/css" href="__STATIC__/newcj/css/chat_list.css">
+    <script src="__STATIC__/newcj/js/jquery.min.js"></script>
+    <script src="__STATIC__/newcj/js/dist/flexible/flexible_css.debug.js"></script>
+    <script src="__STATIC__/newcj/js/dist/flexible/flexible.debug.js"></script>
+
+</head>
+<body>
+<div class='fui-page-group'>
+    <div class="fui-statusbar"></div>
+<div class='fui-page chat-page'>
+	<div class="fui-header">
+	    <div class="title">消息列表</div>
+	    <div class="fui-header-right"></div>
+	</div>
+
+	<div class="fui-content navbar chat-fui-content" id="content" style="padding-bottom: 2rem;">
+
+	</div>
+</div>
+</div>
+</body>
+<script>
+    var fromid ={$fromid};
+    var ws=new WebSocket("ws:127.0.0.1:8282");
+    ws.onmessage=function (e) {
+        var message = JSON.parse(e.data);
+        list();
+        switch (message.type){
+			case 'init':
+                ws.send(JSON.stringify({'type':'bind','fromid':fromid}));
+                console.log('init')
+                list();
+                return;
+            case 'text':
+                console.log('text')
+                list();
+                return;
+			case 'say_img':
+			    console.log('img')
+			    list();
+			    return;
+        }
+    }
+    /**
+     *根据时间戳格式化为日期形式
+     */
+    function mydate(nS){
+
+        return new Date(parseInt(nS) * 1000).toLocaleString().replace(/年|月/g, "-").replace(/日/g, " ");
+    }
+    function list(){
+        $.ajax({
+            url:"http://127.0.0.1/workermanTest/public/index.php/api/chat/get_list",
+            dataType:'json',
+            data:{fromid:fromid},
+            type:'post',
+            success:function (data) {
+                $("#content").empty();
+                $.each(data.message,function (index,value) {
+                    console.log(value.last_message.type);
+                    if(value.countNoread!=0){
+                        $("#content").append('<div class="chat-list flex lis" dadaHref='+value.chat_page+'>' +
+                            '<div class="chat-img"  style="background-image: url('+value.head_url+')">' +
+                            '<span class="badge" style="top: -0.1rem;left: 80%;">'+value.countNoread+'</span>' +
+                            '</div>' +
+                            '<div class="chat-info">' +
+                            '<p class="chat-merch flex">' +
+                            '<span class="title t-28">'+value.username+'</span>' +
+                            '<span class="time">'+mydate(value.last_message.time)+'</span>' +
+                            '</p>' +
+                            '<p class="chat-text singleflow-ellipsis">'+(value.last_message.type=="1"?value.last_message.content:"[图片]")+'</p>' +
+                            '</div>' +
+                            '</div>');
+                    }else{
+                        $("#content").append('<div class="chat-list flex lis" dadaHref='+value.chat_page+'>' +
+                            '<div class="chat-img"  style="background-image: url('+value.head_url+')">' +
+                            '</div>' +
+                            '<div class="chat-info">' +
+                            '<p class="chat-merch flex">' +
+                            '<span class="title t-28">'+value.username+'</span>' +
+                            '<span class="time">'+mydate(value.last_message.time)+'</span>' +
+                            '</p>' +
+                            '<p class="chat-text singleflow-ellipsis">'+(value.last_message.type=="1"?value.last_message.content:"[图片]")+'</p>' +
+                            '</div>' +
+                            '</div>');
+                    }
+                })
+                $(".lis").on('click',function () {
+                    console.log('1')
+                    var href=$(this).attr("dadaHref");
+                    window.location.href=href;
+                })
+            },
+            error:function (err) {
+                console.log(err)
+            }
+        })
+	}
+</script>
+<!--<script>
+
+    var API_URL = "http://chat.com/index.php/api/chat/";
+    var fromid ={$fromid};
+	
+    $(function(){
+        $.post(
+                API_URL+"get_list",
+                {id:fromid},
+                function(res){
+                    console.log(res);
+                },'json'
+        )
+
+
+    })
+
+
+    /**
+     *根据时间戳格式化为日期形式
+     */
+    function mydate(nS){
+
+        return new Date(parseInt(nS) * 1000).toLocaleString().replace(/年|月/g, "-").replace(/日/g, " ");
+    }
+
+</script>-->
+
+</html>
